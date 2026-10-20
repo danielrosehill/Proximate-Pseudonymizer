@@ -1,0 +1,28 @@
+{
+  "base": "Qwen/Qwen3-4B-Instruct-2507",
+  "target": "text",
+  "epochs": 2.0,
+  "lr": 2e-05,
+  "n_train": 64,
+  "n_test": 16,
+  "system": "Rewrite the text with every identifying detail (names, places, organisations, dates, numbers, contacts) replaced by a close, plausible substitute of the same kind. Use the same substitute every time a detail recurs. Change nothing else. Reply with the rewritten text only.",
+  "seconds": {
+    "base_eval": 0,
+    "train": 29,
+    "ft_eval": 44
+  },
+  "log": [
+    {
+      "train_runtime": 29.1589,
+      "train_samples_per_second": 4.39,
+      "train_steps_per_second": 0.274,
+      "total_flos": 1817468136339456.0,
+      "train_loss": 0.5103653073310852,
+      "entropy": 0.1239424956147559,
+      "mean_token_accuracy": 0.9206258738413453,
+      "num_tokens": 63408.0,
+      "epoch": 2.0,
+      "step": 8
+    }
+  ]
+}

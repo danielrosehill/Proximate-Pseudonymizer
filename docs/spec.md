@@ -167,3 +167,33 @@ under-training, not a data defect, so pp-r2 raises LR to 5e-5 and trains 3 epoch
 base eval with `SKIP_BASE=1`, since the base predictions don't change between runs.
 Caveat on the leak metric: short originals such as an age ("19") count as leaked if the same
 number appears anywhere else in the prediction, so the metric is slightly pessimistic.
+
+### Base model and output shape, revisited (2026-10-21, after pp-r1)
+
+pp-r1 showed Qwen3-0.6B learns the rewrite format but misses a quarter of the details. Two
+changes are on the table:
+
+1. **Output shape.** Writing out the whole text spends nearly all of the model's output (and
+   training loss) on copying, and a missed detail is just one more copied token. With
+   `TARGET=map`, the model emits only the swap list as JSON and `apply_map` builds the text. That
+   guarantees consistency and an untouched remainder, and leaves the model to detect details and
+   pick substitutes. eternisai/Anonymizer (the closest prior art, docs/research/2026-10-21-exists-check.md)
+   uses this shape too, as a `replace_entities` tool call. The published model stays text in →
+   text out by shipping the apply step (about 20 lines) with it.
+2. **Size.** Detecting details in mixed-language text (about 20% non-English) is mostly
+   world knowledge, which grows with size. Candidates: Qwen3-4B-Instruct-2507 (Apache-2.0,
+   non-thinking, strong multilingual) and Qwen3-1.7B (smaller and cheaper to run). Gemma 3 4B
+   was not tried: same size class, more restrictive licence.
+
+Instruct versus base matters little for a full fine-tune on 4k examples; size and output
+shape matter more. Comparison runs, all with `SKIP_BASE=1`:
+
+| Run | Base | TARGET | GPU | LR |
+| --- | --- | --- | --- | --- |
+| pp-r2 | Qwen3-0.6B | text | L4 | 5e-5, 3 ep |
+| pp-r3-4b-map | Qwen3-4B-Instruct-2507 | map | H100 | 1e-5, 2 ep, batch 2×8 |
+| pp-r3-4b-text | Qwen3-4B-Instruct-2507 | text | H100 | 1e-5, 2 ep, batch 2×8 |
+| pp-r3-1.7b-map | Qwen3-1.7B | map | L40S | 2e-5, 2 ep |
+
+Smoke runs on 64 rows (H100, about 2 min each) passed in both modes, with 0/16 JSON parse
+errors in map mode.

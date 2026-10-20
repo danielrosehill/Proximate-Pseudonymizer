@@ -9,7 +9,13 @@ Runs on Modal's `ai-training` app (ai-models/Modal-AI-Training), uploading this 
 Reads data/train.jsonl and data/test.jsonl (built by scripts/build.py). Writes to $OUT: the
 model, predictions from the untrained base (few-shot) and the fine-tuned model (zero-shot) on
 the test split, and metrics.json with timings. Score with scripts/evaluate.py.
-Env: BASE, EPOCHS, LR, MAX_TRAIN (cap rows, for smoke runs), SKIP_BASE=1 (reuse an earlier run's
+TARGET=text (default) trains the model to write the whole rewritten text. TARGET=map trains it to
+emit only the swap list as JSON ({"replacements": [{"original", "replacement"}]}); the text is
+then produced by scripts/pairs.py apply_map, so consistency and the untouched rest of the text
+hold by construction and the model's job shrinks to detection + choosing substitutes. This is
+the shape eternisai/Anonymizer uses (a replace_entities tool call). Map predictions are written
+as rewritten text (plus the raw reply) so scripts/evaluate.py scores both modes the same way.
+Env: BASE, EPOCHS, LR, BATCH (per device, default 4; grad accumulation keeps 16), TARGET, MAX_TRAIN (cap rows, for smoke runs), SKIP_BASE=1 (reuse an earlier run's
 pred_base.jsonl; the base eval is ~12 min of L4 time and does not change between runs).
 """
 import json
@@ -25,6 +31,9 @@ from datasets import Dataset
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from trl import SFTConfig, SFTTrainer
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
+from pairs import apply_map  # noqa: E402
+
 BASE = os.environ.get("BASE", "Qwen/Qwen3-0.6B")
 OUT = Path(os.environ.get("OUT", "out"))
 DATA = Path(__file__).resolve().parent.parent / "data"
@@ -32,12 +41,22 @@ EPOCHS = float(os.environ.get("EPOCHS", "2"))
 LR = float(os.environ.get("LR", "2e-5"))
 MAX_TRAIN = int(os.environ.get("MAX_TRAIN", "0"))
 SKIP_BASE = os.environ.get("SKIP_BASE") == "1"
+TARGET = os.environ.get("TARGET", "text")
+BATCH = int(os.environ.get("BATCH", "4"))
 
 # Kept short on purpose: the behaviour lives in the weights, and the published model card
 # documents this exact string as the system prompt to use.
 SYSTEM = ("Rewrite the text with every identifying detail (names, places, organisations, dates, numbers, "
           "contacts) replaced by a close, plausible substitute of the same kind. Use the same substitute "
           "every time a detail recurs. Change nothing else. Reply with the rewritten text only.")
+
+SYSTEM_MAP = ("List every identifying detail in the text (names, places, organisations, dates, numbers, "
+              "contacts) with a close, plausible substitute of the same kind, exactly as each appears in the "
+              "text. One entry per distinct detail; related forms (a first name used alone, a name inside an "
+              "email) get matching substitutes. Reply with JSON only: "
+              '{"replacements": [{"original": "...", "replacement": "..."}]}. No details: {"replacements": []}.')
+if TARGET == "map":
+    SYSTEM = SYSTEM_MAP
 
 SHOT_IN = ("I'm Daniel, I live in Jerusalem and work at Hadassah. My brother Yossi still lives in Haifa; "
            "call me on 052-841-2209 if you need anything. Daniel")
@@ -56,6 +75,24 @@ def messages(text, shots=False):
     return m + [{"role": "user", "content": text}]
 
 
+def target(r):
+    if TARGET == "map":
+        return json.dumps({"replacements": r["replacements"]}, ensure_ascii=False)
+    return r["output"]
+
+
+def to_text(r, reply):
+    """Map mode: parse the JSON reply and apply it; unparseable replies leave the text unchanged."""
+    if TARGET != "map":
+        return {"id": r["id"], "pred": reply}
+    try:
+        reps = json.loads(reply)["replacements"]
+        m = {x["original"]: x["replacement"] for x in reps if x.get("original") and x.get("replacement")}
+        return {"id": r["id"], "pred": apply_map(r["input"], m), "raw": reply}
+    except (json.JSONDecodeError, KeyError, TypeError, AttributeError):
+        return {"id": r["id"], "pred": r["input"], "raw": reply, "parse_error": True}
+
+
 def generate(model, tok, rows, shots):
     model.eval()
     tok.padding_side = "left"
@@ -69,7 +106,7 @@ def generate(model, tok, rows, shots):
         with torch.no_grad():
             out = model.generate(**enc, max_new_tokens=int(longest * 1.4) + 64, do_sample=False)
         for r, o in zip(batch, out):
-            preds.append({"id": r["id"], "pred": tok.decode(o[enc["input_ids"].shape[1]:], skip_special_tokens=True).strip()})
+            preds.append(to_text(r, tok.decode(o[enc["input_ids"].shape[1]:], skip_special_tokens=True).strip()))
     return preds
 
 
@@ -99,11 +136,11 @@ def main():
     def to_example(r):
         prompt = tok.apply_chat_template(messages(r["input"]), tokenize=False, add_generation_prompt=True,
                                          enable_thinking=False)
-        return {"prompt": prompt, "completion": r["output"] + tok.eos_token}
+        return {"prompt": prompt, "completion": target(r) + tok.eos_token}
 
     ds = Dataset.from_list([to_example(r) for r in train])
     cfg = SFTConfig(output_dir=str(OUT / "ckpt"), num_train_epochs=EPOCHS, learning_rate=LR,
-                    per_device_train_batch_size=4, gradient_accumulation_steps=4, gradient_checkpointing=True,
+                    per_device_train_batch_size=BATCH, gradient_accumulation_steps=16 // BATCH, gradient_checkpointing=True,
                     bf16=True, max_length=3072, logging_steps=10, save_strategy="no", report_to=[],
                     lr_scheduler_type="cosine", warmup_steps=20)
     model = AutoModelForCausalLM.from_pretrained(BASE, dtype=torch.bfloat16)
@@ -116,7 +153,7 @@ def main():
 
     t2 = time.time()
     dump(OUT / "pred_ft.jsonl", generate(trainer.model, tok, test, shots=False))
-    metrics = {"base": BASE, "epochs": EPOCHS, "lr": LR, "n_train": len(train), "n_test": len(test),
+    metrics = {"base": BASE, "target": TARGET, "epochs": EPOCHS, "lr": LR, "n_train": len(train), "n_test": len(test),
                "system": SYSTEM,
                "seconds": {"base_eval": round(t_base), "train": round(t_train), "ft_eval": round(time.time() - t2)},
                "log": trainer.state.log_history}

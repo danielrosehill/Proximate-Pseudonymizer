@@ -1,0 +1,28 @@
+{
+  "base": "Qwen/Qwen3-4B-Instruct-2507",
+  "target": "map",
+  "epochs": 2.0,
+  "lr": 2e-05,
+  "n_train": 64,
+  "n_test": 16,
+  "system": "List every identifying detail in the text (names, places, organisations, dates, numbers, contacts) with a close, plausible substitute of the same kind, exactly as each appears in the text. One entry per distinct detail; related forms (a first name used alone, a name inside an email) get matching substitutes. Reply with JSON only: {\"replacements\": [{\"original\": \"...\", \"replacement\": \"...\"}]}. No details: {\"replacements\": []}.",
+  "seconds": {
+    "base_eval": 0,
+    "train": 25,
+    "ft_eval": 23
+  },
+  "log": [
+    {
+      "train_runtime": 24.3008,
+      "train_samples_per_second": 5.267,
+      "train_steps_per_second": 0.329,
+      "total_flos": 1673581063673856.0,
+      "train_loss": 0.9498376846313477,
+      "entropy": 0.15348554635420442,
+      "mean_token_accuracy": 0.8758231857791543,
+      "num_tokens": 62288.0,
+      "epoch": 2.0,
+      "step": 8
+    }
+  ]
+}
