@@ -87,7 +87,18 @@ the decisions into `data/reviews.jsonl`, and `build.py` applies them.
 
 Verified 2026-10-21: page renders behind the private gate. The load / browse / stats / save /
 pull path was exercised locally with the same code and a write token; the test review was
-deleted afterwards. The in-browser OAuth sign-in has not been exercised yet.
+deleted afterwards. In-browser OAuth confirmed when Daniel's first two Space decisions arrived
+through `pull_reviews.py`.
+
+**Review design (Daniel, 2026-10-21):** the pseudonymized text is edited in place, with no
+separate swap table. Each edit or rejection takes preset reasons (`REASONS` in `space/app.py`:
+missed detail, not proximate by gender / culture / place / other, inconsistent, should not be
+replaced, format broken, grammar after swap, other) plus free-text details. On save, the
+Space stores `edits`: word-level `{from, to, original}` spans diffed from the generated output,
+where `original` is the source span whenever the edited text was a generated substitute.
+Accept with an edited box saves it as `fix`. `scripts/learnings.py` groups decisions by reason,
+with example edits and settings, so systematic generator errors become prompt or validator
+changes ("targeted learnings").
 
 Traps:
 - Gradio injects `gr.OAuthToken` only into functions whose signature type-hints it. A lambda

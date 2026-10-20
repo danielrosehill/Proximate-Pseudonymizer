@@ -21,6 +21,7 @@ real people and places.
 | 3. Human review (gold test set first) | private Space [`Proximate-Pseudonymizer-Review`](https://huggingface.co/spaces/danielrosehill/Proximate-Pseudonymizer-Review) (`space/`), then `scripts/pull_reviews.py`; or locally `scripts/review.py` → http://localhost:8767 | HF / laptop |
 | 4. Train + predict | `training/train.py` | Modal `ai-training`, L4 |
 | 5. Score | `scripts/evaluate.py runs/<run>/pred_*.jsonl` | laptop |
+| — Review learnings | `scripts/learnings.py` (corrections grouped by reason, with example edits) | laptop |
 
 Targets are never written by the LLM. They are computed by applying the map
 (`scripts/pairs.py`), so every target is consistent within its text and leaves everything

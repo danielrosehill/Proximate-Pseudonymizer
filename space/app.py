@@ -11,6 +11,7 @@ data/reviews.jsonl.
 
 from __future__ import annotations
 
+import difflib
 import html
 import json
 import os
@@ -57,6 +58,39 @@ JS = """
 
 HARD = ("conflict", "chain", "contains", "leak", "empty_map")
 
+# Why a reviewer edited or rejected a pair. Saved with the exact edited spans so corrections can
+# be analysed by kind ("targeted learnings"), not just counted.
+REASONS = [
+    "missed detail (still identifying)",
+    "not proximate: gender",
+    "not proximate: culture / language",
+    "not proximate: place size or region",
+    "not proximate: other",
+    "inconsistent with another mention",
+    "should not be replaced (public / generic)",
+    "format broken (date, phone, email, ID)",
+    "grammar or agreement after swap",
+    "other",
+]
+
+
+def span_edits(before: str, after: str, reps: list[dict]) -> list[dict]:
+    """Word-level diff of the model output vs the reviewer's text, as {from, to[, original]} spans.
+    "original" is the source-text span when the edited span was one of the generated substitutes."""
+    tok = re.compile(r"\w+|\s+|[^\w\s]")
+    a, b = tok.findall(before), tok.findall(after)
+    back = {x["replacement"]: x["original"] for x in reps}
+    out = []
+    for op, i1, i2, j1, j2 in difflib.SequenceMatcher(a=a, b=b, autojunk=False).get_opcodes():
+        if op == "equal":
+            continue
+        e = {"from": "".join(a[i1:i2]).strip(), "to": "".join(b[j1:j2]).strip()}
+        if e["from"] in back:
+            e["original"] = back[e["from"]]
+        if e["from"] or e["to"]:
+            out.append(e)
+    return out
+
 
 def pairs(token: str) -> list[dict]:
     if "pairs" not in CACHE:
@@ -97,6 +131,18 @@ def render(r: dict | None):
     return meta, inp, out, f'<table class="map">{rows}</table>{flags}', r["output"]
 
 
+def chips(r: dict) -> str:
+    return "".join(f'<span class="flag{" hard" if f.startswith(HARD) else ""}">{html.escape(f)}</span>' for f in r["flags"])
+
+
+def render_review(r: dict | None):
+    """-> meta, highlighted original, flag chips, editable pseudonymized text."""
+    if r is None:
+        return "Nothing left in this queue.", "", "", ""
+    meta, inp, _, _, out = render(r)
+    return meta, inp, chips(r), out
+
+
 def queue(token: str, scope: str, skipped: list[str]) -> list[dict]:
     done = reviews(token)
     rows = [r for r in pairs(token) if r["id"] not in done and r["id"] not in skipped]
@@ -117,7 +163,7 @@ def progress(token: str, scope: str, left: int) -> str:
 def next_item(token, scope, skipped):
     q = queue(token, scope, skipped)
     item = q[0] if q else None
-    return (item["id"] if item else None, *render(item), progress(token, scope, len(q)))
+    return (item["id"] if item else None, *render_review(item), progress(token, scope, len(q)))
 
 
 def need(token):
@@ -128,16 +174,16 @@ def need(token):
 
 def on_load(scope, skipped, oauth_token: gr.OAuthToken | None):
     if oauth_token is None:
-        return None, "Sign in to load the pairs.", "", "", "", "", ""
+        return None, "Sign in to load the pairs.", "", "", "", ""
     return next_item(oauth_token.token, scope, skipped or [])
 
 
-def on_decide(verdict, item_id, fixed, note, scope, skipped, profile: gr.OAuthProfile | None,
+def on_decide(verdict, item_id, fixed, reasons, note, scope, skipped, profile: gr.OAuthProfile | None,
               oauth_token: gr.OAuthToken | None):
     tok = need(oauth_token)
     if verdict == "skip":
         skipped = (skipped or []) + ([item_id] if item_id else [])
-        return (*next_item(tok, scope, skipped), skipped, "")
+        return (*next_item(tok, scope, skipped), skipped, [], "")
     if not item_id:
         raise gr.Error("No item loaded.")
     r = CACHE["by_id"][item_id]
@@ -147,16 +193,20 @@ def on_decide(verdict, item_id, fixed, note, scope, skipped, profile: gr.OAuthPr
     if verdict == "accept" and edited:
         verdict = rec["verdict"] = "fix"  # an edited box is a fix, whichever button saved it
     if verdict == "fix":
-        if not edited:
-            raise gr.Error("Edit the text box first (or press Accept).")
         rec["output"] = fixed.replace("\r\n", "\n")
+        rec["edits"] = span_edits(r["output"], rec["output"], r["replacements"])
+    if reasons:
+        rec["reasons"] = reasons
     if note.strip():
         rec["note"] = note.strip()
     HfApi(token=tok).upload_file(path_or_fileobj=json.dumps(rec, ensure_ascii=False).encode(),
                                  path_in_repo=f"reviews/{item_id}.json", repo_id=DATASET, repo_type="dataset",
                                  commit_message=f"Review {item_id}: {verdict}")
-    gr.Info(f"{item_id}: {verdict}")
-    return (*next_item(tok, scope, skipped or []), skipped, "")
+    if verdict != "accept" and not reasons and not note.strip():
+        gr.Warning(f"{item_id}: {verdict} saved without a reason")
+    else:
+        gr.Info(f"{item_id}: {verdict}" + (f" · {len(rec['edits'])} edit(s)" if rec.get("edits") else ""))
+    return (*next_item(tok, scope, skipped or []), skipped, [], "")
 
 
 def browse(split, flag, idx, oauth_token: gr.OAuthToken | None):
@@ -181,10 +231,10 @@ def stats(oauth_token: gr.OAuthToken | None):
 
 
 with gr.Blocks(title="Pseudonymizer pair review", css=CSS, js=JS, theme=gr.themes.Soft()) as demo:
-    gr.Markdown("# Proximate-Pseudonymizer · pair review\nRed = original span, green = its substitute. "
-                "Reject or fix when a substitute isn't *proximate* (wrong gender or country, very different scale), "
-                "a detail was missed, or an ordinary word was swapped. Keys: **a** accept · **r** reject · "
-                "**e** edit · **n** skip.")
+    gr.Markdown("# Proximate-Pseudonymizer · pair review\nRed = the identifying spans in the original. Edit the "
+                "pseudonymized text directly where a substitute isn't *proximate* (wrong gender or country, very "
+                "different scale), a detail was missed, or an ordinary word was swapped, tick why, then **Accept** "
+                "(saves your edit). Keys: **a** accept · **r** reject · **e** edit · **n** skip.")
     gr.LoginButton(icon=None, size="md")
     item_id, skipped = gr.State(None), gr.State([])
     with gr.Tab("Review"):
@@ -196,16 +246,17 @@ with gr.Blocks(title="Pseudonymizer pair review", css=CSS, js=JS, theme=gr.theme
                 gr.Markdown("**Original**")
                 inp = gr.HTML()
             with gr.Column():
-                gr.Markdown("**Pseudonymized**")
-                out = gr.HTML()
-                # Always visible: hidden in a collapsed accordion, reviewers could not find it.
-                fixbox = gr.Textbox(lines=8, max_lines=40, elem_id="fixbox",
-                                    label="Edit the pseudonymized text here (e), then Save fix — Accept also saves an edit")
-        mapbox = gr.HTML()
-        note = gr.Textbox(label="Note (optional)", lines=1)
+                gr.Markdown("**Pseudonymized — edit directly (e)**")
+                # The pseudonymized text IS the editor (Daniel, 2026-10-21: "just direct editing
+                # over the obfuscated text"); no separate swap table in the review tab.
+                fixbox = gr.Textbox(lines=12, max_lines=60, elem_id="fixbox", show_label=False, container=False)
+        flagbox = gr.HTML()
         with gr.Row():
-            b_acc = gr.Button("✓ Accept (a)", elem_id="accept")
-            b_fix = gr.Button("✎ Save fix", elem_id="fix")
+            reasons = gr.CheckboxGroup(REASONS, label="Reason for edit / rejection (where applicable)", scale=3)
+            note = gr.Textbox(label="Details (optional)", lines=3, scale=2,
+                              placeholder="e.g. Ramat Gan is a suburb, Haifa is too big a jump")
+        with gr.Row():
+            b_acc = gr.Button("✓ Accept / save edit (a)", elem_id="accept")
             b_rej = gr.Button("✗ Reject (r)", elem_id="reject")
             b_skip = gr.Button("→ Skip (n)", elem_id="skip")
     with gr.Tab("Browse"):
@@ -221,11 +272,12 @@ with gr.Blocks(title="Pseudonymizer pair review", css=CSS, js=JS, theme=gr.theme
         st = gr.Markdown()
         gr.Button("Refresh").click(stats, None, st)
 
-    shown = [item_id, meta, inp, out, mapbox, fixbox, prog]
+    shown = [item_id, meta, inp, flagbox, fixbox, prog]
     demo.load(on_load, [scope, skipped], shown)
     scope.change(on_load, [scope, skipped], shown)
-    for btn, v in ((b_acc, "accept"), (b_rej, "reject"), (b_skip, "skip"), (b_fix, "fix")):
-        btn.click(on_decide, [gr.State(v), item_id, fixbox, note, scope, skipped], [*shown, skipped, note])
+    for btn, v in ((b_acc, "accept"), (b_rej, "reject"), (b_skip, "skip")):
+        btn.click(on_decide, [gr.State(v), item_id, fixbox, reasons, note, scope, skipped],
+                  [*shown, skipped, reasons, note])
     # Gradio injects the OAuth token only into functions whose signature is type-hinted with
     # gr.OAuthToken, so these wrappers are real functions, not lambdas.
     def browse_first(s, f, oauth_token: gr.OAuthToken | None):
