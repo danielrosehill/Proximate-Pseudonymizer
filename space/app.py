@@ -143,9 +143,12 @@ def on_decide(verdict, item_id, fixed, note, scope, skipped, profile: gr.OAuthPr
     r = CACHE["by_id"][item_id]
     rec = {"id": item_id, "verdict": verdict, "reviewer": profile.username if profile else None,
            "ts": datetime.now(timezone.utc).isoformat(timespec="seconds")}
+    edited = fixed.strip() != r["output"].strip()
+    if verdict == "accept" and edited:
+        verdict = rec["verdict"] = "fix"  # an edited box is a fix, whichever button saved it
     if verdict == "fix":
-        if fixed.strip() == r["output"].strip():
-            raise gr.Error("Edit the output box first (or press Accept).")
+        if not edited:
+            raise gr.Error("Edit the text box first (or press Accept).")
         rec["output"] = fixed.replace("\r\n", "\n")
     if note.strip():
         rec["note"] = note.strip()
@@ -195,15 +198,16 @@ with gr.Blocks(title="Pseudonymizer pair review", css=CSS, js=JS, theme=gr.theme
             with gr.Column():
                 gr.Markdown("**Pseudonymized**")
                 out = gr.HTML()
+                # Always visible: hidden in a collapsed accordion, reviewers could not find it.
+                fixbox = gr.Textbox(lines=8, max_lines=40, elem_id="fixbox",
+                                    label="Edit the pseudonymized text here (e), then Save fix — Accept also saves an edit")
         mapbox = gr.HTML()
+        note = gr.Textbox(label="Note (optional)", lines=1)
         with gr.Row():
             b_acc = gr.Button("✓ Accept (a)", elem_id="accept")
+            b_fix = gr.Button("✎ Save fix", elem_id="fix")
             b_rej = gr.Button("✗ Reject (r)", elem_id="reject")
             b_skip = gr.Button("→ Skip (n)", elem_id="skip")
-        with gr.Accordion("Fix the output (e)", open=False):
-            fixbox = gr.Textbox(lines=10, max_lines=40, label="Corrected pseudonymized text", elem_id="fixbox")
-            note = gr.Textbox(label="Note (optional)")
-            b_fix = gr.Button("✎ Save fix", elem_id="fix")
     with gr.Tab("Browse"):
         with gr.Row():
             split = gr.Dropdown(["all", "test", "train", "dropped"], value="all", label="Split")
