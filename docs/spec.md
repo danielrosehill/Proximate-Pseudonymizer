@@ -75,3 +75,23 @@ Spot check of the hard flags, all correctly dropped:
 - `contains`: swaps too close to obfuscate (`Carlo`→`Carlos`, `Tomas`→`Tomasz`).
 - `chain`: swap cycles (`Savannah`→`Charleston`, `Charleston`→`Asheville`). Single-pass
   application handles them correctly, but they make review confusing.
+
+## Review Space (2026-10-21)
+
+The private Gradio Space `danielrosehill/Proximate-Pseudonymizer-Review` (source `space/`)
+reads `pairs.jsonl` from the private dataset `danielrosehill/Proximate-Pseudonymizer-Pairs`
+and writes each decision to `reviews/<id>.json` there. It uses the signed-in user's OAuth token
+(`hf_oauth_scopes: read-repos, write-repos`), so no secret is stored in the Space. Because the
+dataset is private, the pairs can only be loaded after sign-in. `scripts/pull_reviews.py` merges
+the decisions into `data/reviews.jsonl`, and `build.py` applies them.
+
+Verified 2026-10-21: page renders behind the private gate. The load / browse / stats / save /
+pull path was exercised locally with the same code and a write token; the test review was
+deleted afterwards. The in-browser OAuth sign-in has not been exercised yet.
+
+Traps:
+- Gradio injects `gr.OAuthToken` only into functions whose signature type-hints it. A lambda
+  wrapper silently receives nothing.
+- Running the app locally needs `gradio[oauth]`, not just `gradio`, when `hf_oauth` is set
+  (ImportError on `itsdangerous`).
+- `gr.LoginButton()` showed a broken logo image on the private Space; `icon=None` removes it.

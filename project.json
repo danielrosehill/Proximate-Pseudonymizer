@@ -69,8 +69,13 @@
     "github": "https://github.com/danielrosehill/Proximate-Pseudonymizer",
     "hub_entry": "ai-models/AI-Model-Development-Workspace/projects.json",
     "hf_models": [],
-    "hf_datasets": [],
-    "public_repo": null
+    "hf_datasets": [
+      "danielrosehill/Proximate-Pseudonymizer-Pairs (private working copy + reviews/)"
+    ],
+    "public_repo": null,
+    "hf_spaces": [
+      "danielrosehill/Proximate-Pseudonymizer-Review (private review Space)"
+    ]
   },
   "release": {
     "intent": "public",
