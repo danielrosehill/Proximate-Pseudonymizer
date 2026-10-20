@@ -106,3 +106,45 @@ Traps:
 - Running the app locally needs `gradio[oauth]`, not just `gradio`, when `hf_oauth` is set
   (ImportError on `itsdangerous`).
 - `gr.LoginButton()` showed a broken logo image on the private Space; `icon=None` removes it.
+
+## Too-close checks (2026-10-21): code instead of a paid judge
+
+Daniel's verdict after reviewing in the Space: the pairs are "already usable". The one flaw
+worth fixing is substitutes that stay **linkable** to the original, e.g. `@hector_rv_1987 →
+@hugo_lm_1984`, which keeps the handle's template and nudges the year. A Sonnet 5.5 judge
+over every pair (est. $15–25) was rejected on cost: these models are meant to start for a
+few dollars. `scripts/similarity.py` does it for free with `rapidfuzz` plus structural rules,
+and `scripts/repair.py` re-picks only the flagged swaps with Haiku 5.5.
+
+Rules (one `Checker`, built over every swap in the data):
+
+| Reason | Rule | Catches |
+| --- | --- | --- |
+| `kept` | a 2–3-word capitalised name keeps its first word, and that word is swapped **on its own** somewhere in the data; or a handle/email keeps a local-part chunk that is such a word | `Tobias Vogt → Tobias Wendt`, `theo.papadakis → nikos.papadakis`, `nathan.keller82 → nathan.keller14` |
+| `spelling` | on the tokens that changed: Jaro-Winkler ≥ 0.92 or normalised Levenshtein ≥ 0.8 (≥ 4 chars, not months) | `Carlo → Carlos`, `Dana → Diana`, `Ron Shapira → Shapiro` |
+| `template+year` | handle/ID with the same shape (letters → a, digits → 9) and a year moved by 1–3 | `@hector_rv_1987 → @hugo_lm_1984` |
+| `digits` | mostly-digit strings (not dates, times, money, postcodes, < 6 digits), fictional blocks stripped, 3 of the last 4 digits equal | `GR-2847-0711 → JR-3915-0718` |
+
+How the thresholds were found, by reading samples of the flags on batch-r1:
+
+1. A naive version flagged **3,043 of 4,930** pairs. The false alarms were shared generic words
+   ("University of", `mailbox.ph`, "Dr."), dates keeping their year (the generator is told
+   to), and the fictional 555 phone block.
+2. Learning "generic" tokens from the data (kept unchanged in ≥ 4 distinct swaps) and skipping
+   dates brought it to 1,774. But "kept any rare word" still fired on ordinary nouns (Highway,
+   Markt, month names), and digit rules on the UK fictional ranges (07700 900…, 01632 96…),
+   addresses and money.
+3. Narrowing `kept` to first names and username chunks, and digits to number-like strings: 860.
+   **Trap:** that also stopped catching `Tobias Vogt → Tobias Wendt`, because first names are
+   kept unchanged so often that the frequency rule had learned "tobias" as generic. The flaw
+   was hiding itself.
+4. Fix: a fixed list of place/org/honorific prefixes (Kiryat, Klinikum, Derech, Dr., Kuya, Grandad…),
+   plus the "is this word ever swapped on its own?" test, which separates names
+   ("Tobias") from organisation prefixes ("Banco", "Grupo"). Result: **429 pairs (8.7%)**,
+   samples nearly all real.
+
+`build.py` makes a too-close swap hard (the row is dropped) unless `repair.py` returned a map
+that passes every check again. The 300-row test pool is drawn exactly as before (rows clean
+under the original validation, seed 0), so earlier reviews stay valid. Rows in the pool that
+are too close and unrepaired are left out of `test.jsonl`. The test set no longer waits on
+manual review.

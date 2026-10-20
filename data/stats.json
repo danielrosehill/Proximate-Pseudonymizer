@@ -1,15 +1,21 @@
 {
+  "close_rows": 429,
   "flag:chain": 88,
+  "flag:close": 157,
   "flag:contains": 40,
   "flag:empty_map": 5,
   "flag:leak": 186,
-  "flag:missing": 566,
-  "flag:partial_mismatch": 102,
-  "hard": 271,
-  "reviews": {},
+  "flag:missing": 539,
+  "flag:partial_mismatch": 118,
+  "flag:repair_failed": 82,
+  "flag:repaired": 304,
+  "hard": 355,
+  "repaired": 304,
+  "reviews": {
+    "accept": 2
+  },
   "rows": 4930,
-  "test_pool": 300,
-  "test_reviewed": 0,
-  "train": 4359,
+  "test": 295,
+  "train": 4280,
   "unparsed": 70
 }

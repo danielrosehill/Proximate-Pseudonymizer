@@ -4,8 +4,8 @@
   "title": "Text-in/text-out pseudonymizer that swaps identifying details for proximate, consistent substitutes",
   "created": "2026-10-21",
   "updated": "2026-10-21",
-  "status": "review",
-  "stage": "review",
+  "status": "training",
+  "stage": "training",
   "verdict": "build",
   "task": {
     "pipeline_tag": "text-generation",
@@ -33,12 +33,13 @@
       "date": "2026-10-21"
     },
     "review": {
-      "status": "in_progress",
-      "date": null
+      "status": "replaced",
+      "date": "2026-10-21",
+      "note": "manual review replaced by scripts/similarity.py too-close checks + repair.py"
     },
     "training": {
-      "status": "todo",
-      "date": null
+      "status": "in_progress",
+      "date": "2026-10-21"
     },
     "publish": {
       "status": "todo",
@@ -62,9 +63,27 @@
       "tokens_in": 5248864,
       "tokens_out": 3195765,
       "cost_usd_est": 1.06
+    },
+    {
+      "name": "repair-r1",
+      "batch_id": "msgbatch_01QSL4145qBf8iV6QEgYqK1E",
+      "model": "claude-haiku-5-5",
+      "n": 388,
+      "repaired": 304,
+      "repair_failed": 82,
+      "cost_usd_est": 0.027,
+      "date": "2026-10-21"
     }
   ],
-  "training_runs": [],
+  "training_runs": [
+    {
+      "run": "pp-smoke",
+      "gpu": "L4",
+      "n_train": 48,
+      "minutes": 1.9,
+      "result": "pipeline ok"
+    }
+  ],
   "links": {
     "github": "https://github.com/danielrosehill/Proximate-Pseudonymizer",
     "hub_entry": "ai-models/AI-Model-Development-Workspace/projects.json",

@@ -1,0 +1,27 @@
+{
+  "base": "Qwen/Qwen3-0.6B",
+  "epochs": 1.0,
+  "lr": 2e-05,
+  "n_train": 48,
+  "n_test": 16,
+  "system": "Rewrite the text with every identifying detail (names, places, organisations, dates, numbers, contacts) replaced by a close, plausible substitute of the same kind. Use the same substitute every time a detail recurs. Change nothing else. Reply with the rewritten text only.",
+  "seconds": {
+    "base_eval": 40,
+    "train": 12,
+    "ft_eval": 36
+  },
+  "log": [
+    {
+      "train_runtime": 11.6949,
+      "train_samples_per_second": 4.104,
+      "train_steps_per_second": 0.257,
+      "total_flos": 101473130643456.0,
+      "train_loss": 0.5321003198623657,
+      "entropy": 0.27930471921960515,
+      "mean_token_accuracy": 0.9087526400883993,
+      "num_tokens": 24341.0,
+      "epoch": 1.0,
+      "step": 3
+    }
+  ]
+}

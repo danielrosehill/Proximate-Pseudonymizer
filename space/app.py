@@ -56,7 +56,7 @@ JS = """
 }
 """
 
-HARD = ("conflict", "chain", "contains", "leak", "empty_map")
+HARD = ("conflict", "chain", "contains", "leak", "empty_map", "close", "repair_failed")
 
 # Why a reviewer edited or rejected a pair. Saved with the exact edited spans so corrections can
 # be analysed by kind ("targeted learnings"), not just counted.
@@ -262,8 +262,9 @@ with gr.Blocks(title="Pseudonymizer pair review", css=CSS, js=JS, theme=gr.theme
     with gr.Tab("Browse"):
         with gr.Row():
             split = gr.Dropdown(["all", "test", "train", "dropped"], value="all", label="Split")
-            flag = gr.Dropdown(["any", "none", "leak", "contains", "chain", "conflict", "missing", "partial_mismatch",
-                                "unexpected_map", "empty_map"], value="any", label="Flag")
+            flag = gr.Dropdown(["any", "none", "close", "repaired", "repair_failed", "leak", "contains", "chain",
+                                "conflict", "missing", "partial_mismatch", "unexpected_map", "empty_map"],
+                               value="any", label="Flag")
             idx = gr.Slider(0, 0, step=1, value=0, label="Row")
         bmeta, binp, bout, bmap = gr.Markdown(), gr.HTML(), gr.HTML(), gr.HTML()
         with gr.Row():

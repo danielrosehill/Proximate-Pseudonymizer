@@ -1,14 +1,24 @@
-"""Validate raw generations, apply human reviews, and write the train/test splits.
+# /// script
+# requires-python = ">=3.11"
+# dependencies = ["rapidfuzz>=3"]
+# ///
+"""Validate raw generations, flag too-close swaps, apply repairs and reviews, write the splits.
 
-    python3 scripts/build.py            # data/raw/batch-*.jsonl + data/reviews.jsonl -> data/*.jsonl
+    uv run scripts/build.py     # data/raw/batch-*.jsonl + data/repairs/*.jsonl + data/reviews.jsonl -> data/*.jsonl
 
 Outputs:
-  data/pairs.jsonl   every parsed row: input, output (computed from the map), map, flags, split
-  data/train.jsonl   clean rows not in the test pool, minus rejected ones, with fixes applied
-  data/test.jsonl    test-pool rows a human ACCEPTED or FIXED (the held-out gold set)
-  data/stats.json    counts by flag, split and review state
+  data/pairs.jsonl   every parsed row: input, output (computed from the map), map, flags,
+                     close (too-close swaps before repair), split
+  data/train.jsonl   clean rows outside the test pool, with repairs and fixes applied, minus rejects
+  data/test.jsonl    clean rows of the fixed 300-row test pool (human fixes applied, rejects removed)
+  data/stats.json    counts by flag, split, repair and review state
 
-Hard flags drop a row from training; soft flags are kept and shown in the review tool.
+Hard flags drop a row; soft flags are kept. Too-close swaps (scripts/similarity.py) are hard
+unless scripts/repair.py produced a replacement map that passes every check again.
+
+Since 2026-10-21 the test set no longer waits on manual review: Daniel judged the pairs
+"already usable", and the too-close checks replace the human pass. Reviews made in the Space
+still apply.
 """
 import json
 import random
@@ -18,6 +28,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 from pairs import apply_map, mapping, validate  # noqa: E402
+from similarity import Checker  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
@@ -34,38 +45,61 @@ def load_raw():
             yield json.loads(line)
 
 
-def load_reviews():
-    p = DATA / "reviews.jsonl"
-    latest = {}
-    if p.exists():
+def latest(pattern: str) -> dict:
+    out = {}
+    for p in sorted(DATA.glob(pattern)):
         for line in open(p):
             r = json.loads(line)
-            latest[r["id"]] = r  # last decision wins
-    return latest
+            out[r["id"]] = r  # last one wins
+    return out
+
+
+def checked(text, reps, expect_pii, checker):
+    """-> (map, flags, close) for one replacement list."""
+    flags = validate(text, reps, expect_pii)
+    missing = {f.split(":", 1)[1] for f in flags if f.startswith("missing:")}
+    m = mapping([x for x in reps if x["original"] not in missing])
+    close = [{"original": o, "replacement": n, "why": w.split(":")[0]}
+             for o, n in m.items() for w in checker.too_close(o, n)[:1]]
+    flags += [f"close:{c['why']}:{c['original']}" for c in close]
+    return m, flags, close
 
 
 def main():
-    rows, stats = [], Counter()
-    for r in load_raw():
-        if not r.get("text"):
-            stats["unparsed"] += 1
-            continue
-        flags = validate(r["text"], r["replacements"], bool(r["pii"]))
-        missing = {f.split(":", 1)[1] for f in flags if f.startswith("missing:")}
-        reps = [x for x in r["replacements"] if x["original"] not in missing]
-        m = mapping(reps)
-        hard = [f for f in flags if not f.startswith(SOFT)]
+    raw = [r for r in load_raw()]
+    stats = Counter(unparsed=sum(not r.get("text") for r in raw))
+    raw = [r for r in raw if r.get("text")]
+    checker = Checker([(x["original"], x["replacement"]) for r in raw for x in r["replacements"]])
+    repairs = latest("repairs/*.jsonl")
+
+    rows = []
+    for r in raw:
+        m, flags, close = checked(r["text"], r["replacements"], bool(r["pii"]), checker)
+        base_hard = any(not f.startswith(SOFT) and not f.startswith("close:") for f in flags)
+        repaired = False
+        rp = repairs.get(r["id"])
+        if close and rp and not rp.get("error"):
+            fix = {x["original"]: x["replacement"] for x in rp["replacements"]}
+            reps = [{"original": o, "replacement": fix.get(o, n)} for o, n in m.items()]
+            reps += [{"original": o, "replacement": n} for o, n in fix.items() if o not in m]
+            m2, flags2, close2 = checked(r["text"], reps, bool(r["pii"]), checker)
+            if not close2 and not any(not f.startswith(SOFT) for f in flags2):
+                m, flags, repaired = m2, flags2 + ["repaired"], True
+            else:
+                flags += ["repair_failed"]
         for f in flags:
             stats["flag:" + f.split(":")[0]] += 1
         rows.append({"id": r["id"], "genre": r["genre"], "locale": r["locale"], "language": r.get("language"),
                      "input": r["text"], "output": apply_map(r["text"], m),
                      "replacements": [{"original": o, "replacement": n} for o, n in m.items()],
-                     "flags": flags, "hard": bool(hard)})
+                     "flags": flags, "close": close, "repaired": repaired, "base_hard": base_hard,
+                     "hard": base_hard or (bool(close) and not repaired)})
 
-    clean = [r for r in rows if not r["hard"]]
+    # The pool is drawn from rows clean under the ORIGINAL validation, exactly as before the
+    # too-close checks existed, so it (and reviews made against it) stays stable.
     rng = random.Random(0)
-    pool = set(rng.sample([r["id"] for r in clean], min(TEST_POOL, len(clean))))
-    reviews = load_reviews()
+    pool = set(rng.sample([r["id"] for r in rows if not r["base_hard"]], TEST_POOL))
+    reviews = latest("reviews.jsonl")
     train, test = [], []
     for r in rows:
         r["split"] = "test" if r["id"] in pool else ("train" if not r["hard"] else "dropped")
@@ -73,12 +107,11 @@ def main():
         r["review"] = rv["verdict"] if rv else None
         if rv and rv["verdict"] == "fix":
             r["output"] = rv["output"]
-        if r["split"] == "test" and r["review"] in ("accept", "fix"):
+        if r["review"] == "reject":
+            continue
+        if r["split"] == "test" and (not r["hard"] or r["review"] == "fix"):
             test.append(r)
-        elif r["split"] == "train" and r["review"] != "reject":
-            train.append(r)
-        # A reviewed-and-rejected hard row stays dropped; a hard row a human fixed is rescued.
-        elif r["split"] == "dropped" and r["review"] == "fix":
+        elif r["split"] == "train" or (r["split"] == "dropped" and r["review"] == "fix"):
             train.append(r)
 
     def dump(name, rs):
@@ -90,8 +123,8 @@ def main():
     dump("train.jsonl", [{k: r[k] for k in ("id", "input", "output", "replacements")} for r in train])
     dump("test.jsonl", [{k: r[k] for k in ("id", "input", "output", "replacements")} for r in test])
     stats = dict(stats)
-    stats.update({"rows": len(rows), "hard": sum(r["hard"] for r in rows), "train": len(train),
-                  "test_pool": len(pool), "test_reviewed": len(test),
+    stats.update({"rows": len(rows), "hard": sum(r["hard"] for r in rows), "train": len(train), "test": len(test),
+                  "close_rows": sum(bool(r["close"]) for r in rows), "repaired": sum(r["repaired"] for r in rows),
                   "reviews": dict(Counter(v["verdict"] for v in reviews.values()))})
     (DATA / "stats.json").write_text(json.dumps(dict(sorted(stats.items())), indent=2, ensure_ascii=False))
     print(json.dumps(dict(sorted(stats.items())), indent=1, ensure_ascii=False))
