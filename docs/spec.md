@@ -192,8 +192,15 @@ shape matter more. Comparison runs, all with `SKIP_BASE=1`:
 | --- | --- | --- | --- | --- |
 | pp-r2 | Qwen3-0.6B | text | L4 | 5e-5, 3 ep |
 | pp-r3-4b-map | Qwen3-4B-Instruct-2507 | map | H100 | 1e-5, 2 ep, batch 2×8 |
-| pp-r3-4b-text | Qwen3-4B-Instruct-2507 | text | H100 | 1e-5, 2 ep, batch 2×8 |
+| ~~pp-r3-4b-text~~ | Qwen3-4B-Instruct-2507 | text | H100 | cancelled after ~5 min: Daniel asked to keep spend down, and map is the direction |
 | pp-r3-1.7b-map | Qwen3-1.7B | map | L40S | 2e-5, 2 ep |
 
 Smoke runs on 64 rows (H100, about 2 min each) passed in both modes, with 0/16 JSON parse
 errors in map mode.
+
+Why map is the edit-preserving design: Daniel asked (2026-10-21) for "a model whose strength is
+text preservation … directly applying small edits". Edit models exist (GECToR and LaserTagger
+tag keep/replace per token; CoEdIT is a Flan-T5 instruction editor), but all of them still have
+to learn to copy. With `TARGET=map` the model never copies text; code does, so preservation is
+exact rather than learned. Any model that can list spans works, and that is the strongest
+possible bias toward preservation.
