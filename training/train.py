@@ -9,7 +9,8 @@ Runs on Modal's `ai-training` app (ai-models/Modal-AI-Training), uploading this 
 Reads data/train.jsonl and data/test.jsonl (built by scripts/build.py). Writes to $OUT: the
 model, predictions from the untrained base (few-shot) and the fine-tuned model (zero-shot) on
 the test split, and metrics.json with timings. Score with scripts/evaluate.py.
-Env: BASE, EPOCHS, LR, MAX_TRAIN (cap rows, for smoke runs).
+Env: BASE, EPOCHS, LR, MAX_TRAIN (cap rows, for smoke runs), SKIP_BASE=1 (reuse an earlier run's
+pred_base.jsonl; the base eval is ~12 min of L4 time and does not change between runs).
 """
 import json
 import os
@@ -30,6 +31,7 @@ DATA = Path(__file__).resolve().parent.parent / "data"
 EPOCHS = float(os.environ.get("EPOCHS", "2"))
 LR = float(os.environ.get("LR", "2e-5"))
 MAX_TRAIN = int(os.environ.get("MAX_TRAIN", "0"))
+SKIP_BASE = os.environ.get("SKIP_BASE") == "1"
 
 # Kept short on purpose: the behaviour lives in the weights, and the published model card
 # documents this exact string as the system prompt to use.
@@ -84,10 +86,11 @@ def main():
     tok = AutoTokenizer.from_pretrained(BASE)
     t0 = time.time()
 
-    base = AutoModelForCausalLM.from_pretrained(BASE, dtype=torch.bfloat16).cuda()
-    dump(OUT / "pred_base.jsonl", generate(base, tok, test, shots=True))
-    del base
-    torch.cuda.empty_cache()
+    if not SKIP_BASE:
+        base = AutoModelForCausalLM.from_pretrained(BASE, dtype=torch.bfloat16).cuda()
+        dump(OUT / "pred_base.jsonl", generate(base, tok, test, shots=True))
+        del base
+        torch.cuda.empty_cache()
     t_base = time.time() - t0
 
     # Prompts rendered by hand, not via SFTConfig chat-template options: those names changed

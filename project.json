@@ -82,6 +82,36 @@
       "n_train": 48,
       "minutes": 1.9,
       "result": "pipeline ok"
+    },
+    {
+      "run": "pp-r1",
+      "date": "2026-10-21",
+      "gpu": "L4",
+      "base": "Qwen/Qwen3-0.6B",
+      "epochs": 2,
+      "lr": 2e-05,
+      "n_train": 4280,
+      "n_test": 295,
+      "minutes": 51.9,
+      "final_train_loss": 0.279,
+      "metrics_base_oneshot": {
+        "exact": 0.027,
+        "leak": 0.856,
+        "swapped": 0.125,
+        "consistency": 0.997,
+        "preserved": 0.791,
+        "untouched_ok": 0.308
+      },
+      "metrics_ft": {
+        "exact": 0.081,
+        "leak": 0.265,
+        "swapped": 0.298,
+        "consistency": 0.983,
+        "preserved": 0.999,
+        "untouched_ok": 0.923
+      },
+      "result": "fails pass bar on leak (0.265 vs <=0.05); consistency, preserved, untouched_ok pass",
+      "diagnosis": "no truncation; the model swaps most details but misses ~1 in 4 per row, spread across all kinds (one-word names worst at 0.33); only 62/269 PII rows fully swapped"
     }
   ],
   "links": {

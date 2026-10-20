@@ -148,3 +148,22 @@ that passes every check again. The 300-row test pool is drawn exactly as before 
 under the original validation, seed 0), so earlier reviews stay valid. Rows in the pool that
 are too close and unrepaired are left out of `test.jsonl`. The test set no longer waits on
 manual review.
+
+## Training runs
+
+Scored with `scripts/evaluate.py` on the 295-row test set (data/test.jsonl). Pass bar: leak ≤ 0.05,
+consistency ≥ 0.95, preserved ≥ 0.98, untouched_ok ≥ 0.9.
+
+| Run (2026-10-21) | Setup | leak | swapped | consistency | preserved | untouched_ok | exact |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| base, one-shot | Qwen3-0.6B, Daniel/Jerusalem example | 0.856 | 0.125 | 0.997 | 0.791 | 0.308 | 0.027 |
+| pp-r1 | full FT, 2 ep, LR 2e-5, L4, 51.9 min | **0.265** | 0.298 | 0.983 | 0.999 | 0.923 | 0.081 |
+
+pp-r1 diagnosis: the outputs are not truncated (length ratio ~1.0 on every row); the model
+learned the rewrite format and leaves the rest of the text alone, but misses about a quarter of
+the details in each row. The misses are spread across every kind of detail: one-word names leak
+most (0.33), then multi-word names and numbers (0.26), then emails/handles (0.19). That reads as
+under-training, not a data defect, so pp-r2 raises LR to 5e-5 and trains 3 epochs. It skips the
+base eval with `SKIP_BASE=1`, since the base predictions don't change between runs.
+Caveat on the leak metric: short originals such as an age ("19") count as leaked if the same
+number appears anywhere else in the prediction, so the metric is slightly pessimistic.
