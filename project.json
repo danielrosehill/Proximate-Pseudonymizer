@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "name": "proximate-pseudonymizer",
+  "title": "Text-in/text-out pseudonymizer that swaps identifying details for proximate, consistent substitutes",
+  "created": "2026-10-21",
+  "updated": "2026-10-21",
+  "status": "data",
+  "stage": "data",
+  "verdict": "build",
+  "task": {
+    "pipeline_tag": "text-generation",
+    "modality": "text",
+    "languages": ["en", "multilingual"],
+    "deployment": "local-cpu",
+    "size_budget_params": 600000000
+  },
+  "base_model": "Qwen/Qwen3-0.6B",
+  "stages": {
+    "exists_check": {"status": "done", "date": "2026-10-21", "result": "partial"},
+    "spec": {"status": "done", "date": "2026-10-21"},
+    "data": {"status": "in_progress", "date": "2026-10-21"},
+    "review": {"status": "todo", "date": null},
+    "training": {"status": "todo", "date": null},
+    "publish": {"status": "todo", "date": null}
+  },
+  "data_runs": [
+    {"name": "batch-r1", "batch_id": "msgbatch_01B4zVH9jnTPn3pXEeU7e5WX", "model": "claude-haiku-5-5", "n": 5000, "seed": 1, "submitted": "2026-10-21"}
+  ],
+  "training_runs": [],
+  "links": {
+    "github": "https://github.com/danielrosehill/Proximate-Pseudonymizer",
+    "hub_entry": "ai-models/AI-Model-Development-Workspace/projects.json",
+    "hf_models": [],
+    "hf_datasets": [],
+    "public_repo": null
+  },
+  "release": {"intent": "public", "shape": "single public repo; HF dataset + model public"}
+}
