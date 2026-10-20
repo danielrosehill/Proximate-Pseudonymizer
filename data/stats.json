@@ -1,0 +1,15 @@
+{
+  "flag:chain": 88,
+  "flag:contains": 40,
+  "flag:empty_map": 5,
+  "flag:leak": 186,
+  "flag:missing": 566,
+  "flag:partial_mismatch": 102,
+  "hard": 271,
+  "reviews": {},
+  "rows": 4930,
+  "test_pool": 300,
+  "test_reviewed": 0,
+  "train": 4359,
+  "unparsed": 70
+}

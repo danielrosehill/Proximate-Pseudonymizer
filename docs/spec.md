@@ -63,3 +63,15 @@ strict `exact` floor. Proximity isn't scored automatically.
 **No-model baseline:** the untrained base with a one-shot prompt (`pred_base.jsonl`, written by
 the same training run). **Pass bar for r1:** leak ≤ 0.05, consistency ≥ 0.95,
 preserved ≥ 0.98, untouched_ok ≥ 0.9.
+
+## batch-r1 results (2026-10-21)
+
+5,000 briefs → 4,930 parsed (70 were malformed JSON) → 271 hard-dropped → 4,359 train + 300
+test pool. Cost: 5.25M input + 3.20M output tokens, about **$1.06** at Haiku 5.5 batch rates
+(estimated from usage, not read off the bill).
+
+Spot check of the hard flags, all correctly dropped:
+- `leak`: a surname or region left unmapped (`Halvorsen`, `Negev`).
+- `contains`: swaps too close to obfuscate (`Carlo`→`Carlos`, `Tomas`→`Tomasz`).
+- `chain`: swap cycles (`Savannah`→`Charleston`, `Charleston`→`Asheville`). Single-pass
+  application handles them correctly, but they make review confusing.
