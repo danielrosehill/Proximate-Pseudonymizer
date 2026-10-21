@@ -212,7 +212,8 @@
       "danielrosehill/Proximate-Pseudonymizer-Review (private review Space)",
       "danielrosehill/Proximate-Pseudonymizer-Demo (public demo Space, source demo/)"
     ],
-    "demo": "https://huggingface.co/spaces/danielrosehill/Proximate-Pseudonymizer-Demo"
+    "demo": "https://huggingface.co/spaces/danielrosehill/Proximate-Pseudonymizer-Demo",
+    "blog_post": "https://blog.danielrosehill.com/posts/proximate-pseudonymizer-0-6b-83sw3w/"
   },
   "release": {
     "intent": "public",

@@ -14,7 +14,7 @@ real people and places.
 Model: [`danielrosehill/Proximate-Pseudonymizer-0.6B`](https://huggingface.co/danielrosehill/Proximate-Pseudonymizer-0.6B)
 (Qwen3-0.6B full fine-tune, Apache-2.0). Try it in the public demo Space
 [`Proximate-Pseudonymizer-Demo`](https://huggingface.co/spaces/danielrosehill/Proximate-Pseudonymizer-Demo)
-(CPU, word-level diff of every swap; source in `demo/`). On 295 held-out texts it leaves **9.3% of identifying
+(CPU, word-level diff of every swap; source in `demo/`). Write-up: [blog post](https://blog.danielrosehill.com/posts/proximate-pseudonymizer-0-6b-83sw3w/). On 295 held-out texts it leaves **9.3% of identifying
 details unchanged**; consistency is 0.99 and the rest of the text is 0.998 preserved. **It is
 not safe to run unsupervised.** Suggested targets: ≤ 1% leak with a human reviewing every
 output, ~0.1% or less without. The model card
