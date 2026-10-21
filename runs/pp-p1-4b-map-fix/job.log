@@ -1,0 +1,27 @@
+
+[notice] A new release of pip is available: 26.2.1 -> 26.2.2
+[notice] To update, run: pip install --upgrade pip
+/usr/local/lib/python3.12/site-packages/huggingface_hub/constants.py:302: FutureWarning: The `HF_HUB_ENABLE_HF_TRANSFER` environment variable is deprecated as 'hf_transfer' is not used anymore. Please use `HF_XET_HIGH_PERFORMANCE` instead to enable high performance transfer with Xet. Visit https://huggingface.co/docs/huggingface_hub/package_reference/environment_variables#hfxethighperformance for more details.
+  warnings.warn(
+
+Loading weights:   0%|          | 0/398 [00:00<?, ?it/s]
+Loading weights:   2%|▏         | 7/398 [00:00<00:26, 14.76it/s]
+Loading weights:   5%|▍         | 18/398 [00:02<00:48,  7.84it/s]
+Loading weights:   9%|▊         | 34/398 [00:02<00:27, 13.31it/s]
+Loading weights:  10%|▉         | 38/398 [00:04<00:46,  7.72it/s]
+Loading weights:  14%|█▍        | 56/398 [00:04<00:21, 15.61it/s]
+Loading weights:  16%|█▌        | 64/398 [00:04<00:19, 17.45it/s]
+Loading weights:  21%|██        | 84/398 [00:06<00:20, 15.56it/s]
+Loading weights:  27%|██▋       | 107/398 [00:06<00:11, 26.07it/s]
+Loading weights:  35%|███▍      | 138/398 [00:06<00:05, 44.79it/s]
+Loading weights:  40%|████      | 160/398 [00:06<00:04, 58.92it/s]
+Loading weights:  45%|████▌     | 180/398 [00:06<00:03, 71.81it/s]
+Loading weights:  57%|█████▋    | 227/398 [00:06<00:01, 120.91it/s]
+Loading weights:  65%|██████▌   | 259/398 [00:06<00:00, 150.79it/s]
+Loading weights:  72%|███████▏  | 285/398 [00:07<00:00, 159.29it/s]
+Loading weights:  82%|████████▏ | 325/398 [00:07<00:00, 197.19it/s]
+Loading weights:  89%|████████▉ | 356/398 [00:07<00:00, 201.61it/s]
+Loading weights: 100%|██████████| 398/398 [00:07<00:00, 54.28it/s] 
+{"model": "/data/runs/pp-p1-4b-map/model", "n": 100, "reasked": 223, "fixed": 222, "seconds": 402}
+
+[ai-training] pp-p1-4b-map-fix: exit 0 after 7.2 min

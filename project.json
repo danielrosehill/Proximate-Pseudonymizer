@@ -112,6 +112,88 @@
       },
       "result": "fails pass bar on leak (0.265 vs <=0.05); consistency, preserved, untouched_ok pass",
       "diagnosis": "no truncation; the model swaps most details but misses ~1 in 4 per row, spread across all kinds (one-word names worst at 0.33); only 62/269 PII rows fully swapped"
+    },
+    {
+      "run": "pp-r2",
+      "rung": "full",
+      "date": "2026-10-21",
+      "gpu": "L4",
+      "base": "Qwen/Qwen3-0.6B",
+      "target": "text",
+      "epochs": 3,
+      "lr": 5e-05,
+      "n_train": 4280,
+      "n_test": 295,
+      "metrics_ft": {
+        "exact": 0.085,
+        "leak": 0.093,
+        "swapped": 0.583,
+        "consistency": 0.99,
+        "preserved": 0.998,
+        "untouched_ok": 0.962
+      },
+      "result": "best so far; leak 0.093 vs bar 0.05, other metrics pass. r1 was under-trained, not too small"
+    },
+    {
+      "run": "pp-r3-*",
+      "rung": "full",
+      "gpu": "H100/L40S",
+      "result": "cancelled after ~5-10 min: explore at probe size instead (run ladder)"
+    },
+    {
+      "run": "pp-p1-4b-map",
+      "rung": "probe",
+      "gpu": "H100",
+      "base": "Qwen/Qwen3-4B-Instruct-2507",
+      "target": "map",
+      "epochs": 1,
+      "lr": 1e-05,
+      "n_train": 800,
+      "n_test": 100,
+      "minutes": 5.9,
+      "metrics_ft": {
+        "leak": 0.28,
+        "swapped": 0.29,
+        "consistency": 1.0,
+        "preserved": 0.996,
+        "untouched_ok": 0.778
+      },
+      "parse_errors": 3
+    },
+    {
+      "run": "pp-p1-1.7b-map",
+      "rung": "probe",
+      "gpu": "L40S",
+      "base": "Qwen/Qwen3-1.7B",
+      "target": "map",
+      "epochs": 1,
+      "lr": 2e-05,
+      "n_train": 800,
+      "n_test": 100,
+      "minutes": 3.3,
+      "metrics_ft": {
+        "leak": 0.3,
+        "swapped": 0.21,
+        "consistency": 0.99,
+        "preserved": 0.998,
+        "untouched_ok": 0.778
+      },
+      "parse_errors": 7
+    },
+    {
+      "run": "pp-p1-4b-map-fix",
+      "rung": "probe (inference only)",
+      "gpu": "H100",
+      "model": "pp-p1-4b-map",
+      "minutes": 7.2,
+      "metrics_ft": {
+        "leak": 0.154,
+        "swapped": 0.47,
+        "consistency": 0.98,
+        "preserved": 0.993,
+        "untouched_ok": 0.778
+      },
+      "result": "copy-back repair re-asked 223 entries, fixed 222; leak 0.269 -> 0.154"
     }
   ],
   "links": {

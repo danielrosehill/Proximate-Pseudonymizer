@@ -77,3 +77,17 @@ def validate(text: str, reps: list[dict], expect_pii: bool) -> list[str]:
     if not expect_pii and m:
         flags.append("unexpected_map")
     return flags
+
+
+def expand_partials(text: str, m: dict) -> dict:
+    """Add word-level swaps implied by multi-word ones (Brandon Hargrove -> Kevin Doyle also gives
+    Brandon -> Kevin, Hargrove -> Doyle) when those words occur on their own in the text and the
+    map doesn't already cover them. Only when both sides have the same number of words."""
+    out = dict(m)
+    for o, n in m.items():
+        ow, nw = o.split(), n.split()
+        if len(ow) >= 2 and len(ow) == len(nw):
+            for a, b in zip(ow, nw):
+                if a != b and a[:1].isupper() and len(a) > 2 and a not in out and re.search(_bounded(a), text):
+                    out[a] = b
+    return out

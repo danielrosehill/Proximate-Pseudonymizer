@@ -204,3 +204,31 @@ tag keep/replace per token; CoEdIT is a Flan-T5 instruction editor), but all of 
 to learn to copy. With `TARGET=map` the model never copies text; code does, so preservation is
 exact rather than learned. Any model that can list spans works, and that is the strongest
 possible bias toward preservation.
+
+### Probe results (2026-10-21)
+
+Comparison of every run on the first 100 test rows. pp-r2 is also scored on all 295 rows.
+
+| Run | Rung | leak | swapped | consistency | preserved | untouched_ok |
+| --- | --- | --- | --- | --- | --- | --- |
+| pp-r1 (0.6B text, LR 2e-5, 2 ep) | full | 0.274 | 0.31 | 0.99 | 0.999 | 0.889 |
+| **pp-r2 (0.6B text, LR 5e-5, 3 ep)** | full | **0.103** (0.093 on 295) | 0.58 | 0.98 | 0.998 | 0.889 (0.962 on 295) |
+| pp-p1-1.7b-map (800 rows, 1 ep) | probe | 0.30 | 0.21 | 0.99 | 0.998 | 0.778 |
+| pp-p1-4b-map (800 rows, 1 ep) | probe | 0.28 | 0.29 | 1.0 | 0.996 | 0.778 |
+| pp-p1-4b-map + infer.py fixes | probe | 0.154 | 0.47 | 0.98 | 0.993 | 0.778 |
+
+Findings:
+- **pp-r1 was under-trained, not too small.** The same 0.6B model and data with LR 5e-5 and 3
+  epochs cut leak from 0.265 to 0.093. The size/format hypothesis (above) was premature; the
+  run ladder would have caught it with an LR probe first.
+- **Copy-back.** The map-mode models find most details but write the original back as its
+  replacement ("Brandon Hargrove" -> "Brandon Hargrove": 99 entries in 100 texts, 0 in 37,191
+  training entries). `training/infer.py` re-asks those slots with the original's first token
+  banned (222 of 223 fixed), and `pairs.expand_partials` carries full-name swaps to first and
+  last names used alone.
+- **What still leaks after the fixes** (4B probe): names/places 19%, dates/ages/ordinals 22%,
+  handles/emails 10%, numbers 14%. The gold maps also list job titles and ordinals
+  ("sixteenth"), so part of the bar is arguably over-strict.
+- **Probe models re-create too-close swaps** (`Brandon Keller -> Brent Keller`,
+  `@hector_rv_1987 -> @hernando_rv_1989`). Leak doesn't measure this, so a closeness check on
+  predictions (scripts/similarity.py over the predicted map) belongs in the eval.

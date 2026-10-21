@@ -1,0 +1,128 @@
+{'loss': '0.9741', 'grad_norm': '18.62', 'learning_rate': '4.5e-06', 'entropy': '0.1478', 'mean_token_accuracy': '0.8758', 'num_tokens': '7.814e+04', 'epoch': '0.2'}
+{'loss': '0.5186', 'grad_norm': '4.406', 'learning_rate': '9.5e-06', 'entropy': '0.2817', 'mean_token_accuracy': '0.8857', 'num_tokens': '1.537e+05', 'epoch': '0.4'}
+{'loss': '0.409', 'grad_norm': '2.875', 'learning_rate': '7.939e-06', 'entropy': '0.4075', 'mean_token_accuracy': '0.8924', 'num_tokens': '2.314e+05', 'epoch': '0.6'}
+{'loss': '0.3637', 'grad_norm': '3.328', 'learning_rate': '2.966e-06', 'entropy': '0.353', 'mean_token_accuracy': '0.9011', 'num_tokens': '3.055e+05', 'epoch': '0.8'}
+{'loss': '0.3619', 'grad_norm': '2.781', 'learning_rate': '2.739e-08', 'entropy': '0.3396', 'mean_token_accuracy': '0.905', 'num_tokens': '3.846e+05', 'epoch': '1'}
+{'train_runtime': '144', 'train_samples_per_second': '5.555', 'train_steps_per_second': '0.347', 'train_loss': '0.5255', 'epoch': '1'}
+/usr/local/lib/python3.12/site-packages/huggingface_hub/constants.py:302: FutureWarning: The `HF_HUB_ENABLE_HF_TRANSFER` environment variable is deprecated as 'hf_transfer' is not used anymore. Please use `HF_XET_HIGH_PERFORMANCE` instead to enable high performance transfer with Xet. Visit https://huggingface.co/docs/huggingface_hub/package_reference/environment_variables#hfxethighperformance for more details.
+  warnings.warn(
+transformers 5.20.2, trl 1.16.0
+
+Loading weights:   0%|          | 0/398 [00:00<?, ?it/s]
+Loading weights:   7%|▋         | 29/398 [00:00<00:01, 281.16it/s]
+Loading weights:  15%|█▍        | 58/398 [00:01<00:06, 48.76it/s] 
+Loading weights:  21%|██        | 82/398 [00:01<00:04, 71.28it/s]
+Loading weights:  29%|██▉       | 116/398 [00:01<00:02, 108.79it/s]
+Loading weights:  35%|███▍      | 139/398 [00:01<00:02, 128.36it/s]
+Loading weights:  43%|████▎     | 172/398 [00:01<00:01, 164.21it/s]
+Loading weights:  49%|████▉     | 197/398 [00:01<00:01, 168.17it/s]
+Loading weights:  60%|█████▉    | 237/398 [00:01<00:00, 196.67it/s]
+Loading weights:  67%|██████▋   | 265/398 [00:01<00:00, 214.29it/s]
+Loading weights:  73%|███████▎  | 290/398 [00:01<00:00, 220.40it/s]
+Loading weights:  80%|███████▉  | 318/398 [00:02<00:00, 224.55it/s]
+Loading weights:  88%|████████▊ | 349/398 [00:02<00:00, 232.71it/s]
+Loading weights:  96%|█████████▌| 381/398 [00:02<00:00, 249.33it/s]
+Loading weights: 100%|██████████| 398/398 [00:02<00:00, 170.33it/s]
+
+Adding EOS to train dataset:   0%|          | 0/800 [00:00<?, ? examples/s]
+Adding EOS to train dataset: 100%|██████████| 800/800 [00:00<00:00, 41572.52 examples/s]
+
+Tokenizing train dataset:   0%|          | 0/800 [00:00<?, ? examples/s]
+Tokenizing train dataset:  10%|▉         | 79/800 [00:00<00:00, 777.99 examples/s]
+Tokenizing train dataset:  21%|██        | 167/800 [00:00<00:00, 834.84 examples/s]
+Tokenizing train dataset:  36%|███▋      | 290/800 [00:00<00:00, 823.48 examples/s]
+Tokenizing train dataset:  50%|█████     | 403/800 [00:00<00:00, 785.47 examples/s]
+Tokenizing train dataset:  64%|██████▍   | 515/800 [00:00<00:00, 769.17 examples/s]
+Tokenizing train dataset:  76%|███████▌  | 605/800 [00:00<00:00, 798.61 examples/s]
+Tokenizing train dataset:  90%|████████▉ | 717/800 [00:00<00:00, 775.00 examples/s]
+Tokenizing train dataset: 100%|██████████| 800/800 [00:01<00:00, 786.08 examples/s]
+Tokenizing train dataset: 100%|██████████| 800/800 [00:01<00:00, 701.69 examples/s]
+
+Building labels for train dataset:   0%|          | 0/800 [00:00<?, ? examples/s]
+Building labels for train dataset:  88%|████████▊ | 703/800 [00:00<00:00, 6980.87 examples/s]
+Building labels for train dataset: 100%|██████████| 800/800 [00:00<00:00, 4094.18 examples/s]
+
+Truncating train dataset:   0%|          | 0/800 [00:00<?, ? examples/s]
+Truncating train dataset: 100%|██████████| 800/800 [00:00<00:00, 8413.93 examples/s]
+
+Dropping fully masked examples from train dataset:   0%|          | 0/800 [00:00<?, ? examples/s]
+Dropping fully masked examples from train dataset: 100%|██████████| 800/800 [00:00<00:00, 18837.36 examples/s]
+[RANK 0] Detected kernel version 4.19.0, which is below the recommended minimum of 5.5.0; this can cause the process to hang. It is recommended to upgrade the kernel to the minimum version or higher.
+
+  0%|          | 0/50 [00:00<?, ?it/s]
+  2%|▏         | 1/50 [00:12<09:49, 12.02s/it]
+  4%|▍         | 2/50 [00:16<06:00,  7.52s/it]
+  6%|▌         | 3/50 [00:19<04:19,  5.52s/it]
+  8%|▊         | 4/50 [00:22<03:24,  4.45s/it]
+ 10%|█         | 5/50 [00:25<02:56,  3.92s/it]
+ 12%|█▏        | 6/50 [00:28<02:39,  3.63s/it]
+ 14%|█▍        | 7/50 [00:31<02:26,  3.40s/it]
+ 16%|█▌        | 8/50 [00:35<02:30,  3.59s/it]
+ 18%|█▊        | 9/50 [00:38<02:19,  3.41s/it]
+ 20%|██        | 10/50 [00:40<02:06,  3.16s/it]
+                                               
+
+ 20%|██        | 10/50 [00:40<02:06,  3.16s/it]
+ 22%|██▏       | 11/50 [00:43<01:59,  3.06s/it]
+ 24%|██▍       | 12/50 [00:46<01:53,  2.98s/it]
+ 26%|██▌       | 13/50 [00:49<01:46,  2.89s/it]
+ 28%|██▊       | 14/50 [00:51<01:41,  2.82s/it]
+ 30%|███       | 15/50 [00:55<01:42,  2.94s/it]
+ 32%|███▏      | 16/50 [00:57<01:38,  2.91s/it]
+ 34%|███▍      | 17/50 [01:00<01:36,  2.91s/it]
+ 36%|███▌      | 18/50 [01:03<01:32,  2.88s/it]
+ 38%|███▊      | 19/50 [01:06<01:28,  2.86s/it]
+ 40%|████      | 20/50 [01:09<01:24,  2.82s/it]
+                                               
+
+ 40%|████      | 20/50 [01:09<01:24,  2.82s/it]
+ 42%|████▏     | 21/50 [01:12<01:23,  2.88s/it]
+ 44%|████▍     | 22/50 [01:14<01:16,  2.74s/it]
+ 46%|████▌     | 23/50 [01:17<01:12,  2.69s/it]
+ 48%|████▊     | 24/50 [01:19<01:09,  2.67s/it]
+ 50%|█████     | 25/50 [01:22<01:04,  2.58s/it]
+ 52%|█████▏    | 26/50 [01:24<00:59,  2.48s/it]
+ 54%|█████▍    | 27/50 [01:27<00:59,  2.57s/it]
+ 56%|█████▌    | 28/50 [01:29<00:56,  2.56s/it]
+ 58%|█████▊    | 29/50 [01:32<00:53,  2.54s/it]
+ 60%|██████    | 30/50 [01:34<00:50,  2.55s/it]
+                                               
+
+ 60%|██████    | 30/50 [01:34<00:50,  2.55s/it]
+ 62%|██████▏   | 31/50 [01:37<00:47,  2.51s/it]
+ 64%|██████▍   | 32/50 [01:39<00:43,  2.43s/it]
+ 66%|██████▌   | 33/50 [01:42<00:42,  2.51s/it]
+ 68%|██████▊   | 34/50 [01:44<00:38,  2.43s/it]
+ 70%|███████   | 35/50 [01:46<00:35,  2.34s/it]
+ 72%|███████▏  | 36/50 [01:48<00:33,  2.36s/it]
+ 74%|███████▍  | 37/50 [01:51<00:31,  2.39s/it]
+ 76%|███████▌  | 38/50 [01:53<00:28,  2.40s/it]
+ 78%|███████▊  | 39/50 [01:56<00:26,  2.40s/it]
+ 80%|████████  | 40/50 [01:59<00:25,  2.51s/it]
+                                               
+
+ 80%|████████  | 40/50 [01:59<00:25,  2.51s/it]
+ 82%|████████▏ | 41/50 [02:01<00:23,  2.60s/it]
+ 84%|████████▍ | 42/50 [02:04<00:20,  2.55s/it]
+ 86%|████████▌ | 43/50 [02:07<00:18,  2.61s/it]
+ 88%|████████▊ | 44/50 [02:09<00:15,  2.53s/it]
+ 90%|█████████ | 45/50 [02:12<00:13,  2.60s/it]
+ 92%|█████████▏| 46/50 [02:14<00:09,  2.45s/it]
+ 94%|█████████▍| 47/50 [02:16<00:07,  2.53s/it]
+ 96%|█████████▌| 48/50 [02:19<00:04,  2.49s/it]
+ 98%|█████████▊| 49/50 [02:21<00:02,  2.41s/it]
+100%|██████████| 50/50 [02:23<00:00,  2.41s/it]
+                                               
+
+100%|██████████| 50/50 [02:24<00:00,  2.41s/it]
+                                               
+
+100%|██████████| 50/50 [02:24<00:00,  2.41s/it]
+100%|██████████| 50/50 [02:24<00:00,  2.88s/it]
+
+Writing model shards:   0%|          | 0/1 [00:00<?, ?it/s]
+Writing model shards: 100%|██████████| 1/1 [00:11<00:00, 11.77s/it]
+Writing model shards: 100%|██████████| 1/1 [00:11<00:00, 11.77s/it]
+{"base_eval": 0, "train": 144, "ft_eval": 175}
+
+[ai-training] pp-p1-4b-map: exit 0 after 5.9 min

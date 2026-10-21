@@ -1,0 +1,75 @@
+{
+  "base": "Qwen/Qwen3-1.7B",
+  "target": "map",
+  "epochs": 1.0,
+  "lr": 2e-05,
+  "n_train": 800,
+  "n_test": 100,
+  "system": "List every identifying detail in the text (names, places, organisations, dates, numbers, contacts) with a close, plausible substitute of the same kind, exactly as each appears in the text. One entry per distinct detail; related forms (a first name used alone, a name inside an email) get matching substitutes. Reply with JSON only: {\"replacements\": [{\"original\": \"...\", \"replacement\": \"...\"}]}. No details: {\"replacements\": []}.",
+  "seconds": {
+    "base_eval": 0,
+    "train": 62,
+    "ft_eval": 108
+  },
+  "log": [
+    {
+      "loss": 1.114795207977295,
+      "grad_norm": 27.625,
+      "learning_rate": 9e-06,
+      "entropy": 0.18340589627623557,
+      "mean_token_accuracy": 0.8581237465143203,
+      "num_tokens": 78778.0,
+      "epoch": 0.2,
+      "step": 10
+    },
+    {
+      "loss": 0.5495112419128418,
+      "grad_norm": 9.9375,
+      "learning_rate": 1.9e-05,
+      "entropy": 0.4477968364953995,
+      "mean_token_accuracy": 0.8648022696375847,
+      "num_tokens": 154985.0,
+      "epoch": 0.4,
+      "step": 20
+    },
+    {
+      "loss": 0.4803971290588379,
+      "grad_norm": 3.890625,
+      "learning_rate": 1.5877852522924733e-05,
+      "entropy": 0.47372345849871633,
+      "mean_token_accuracy": 0.8775970980525016,
+      "num_tokens": 233359.0,
+      "epoch": 0.6,
+      "step": 30
+    },
+    {
+      "loss": 0.4284658432006836,
+      "grad_norm": 3.234375,
+      "learning_rate": 5.932633569242e-06,
+      "entropy": 0.42769194915890696,
+      "mean_token_accuracy": 0.8886728525161743,
+      "num_tokens": 308050.0,
+      "epoch": 0.8,
+      "step": 40
+    },
+    {
+      "loss": 0.42648816108703613,
+      "grad_norm": 3.25,
+      "learning_rate": 5.4781046317267103e-08,
+      "entropy": 0.4267967566847801,
+      "mean_token_accuracy": 0.8895695120096206,
+      "num_tokens": 387772.0,
+      "epoch": 1.0,
+      "step": 50
+    },
+    {
+      "train_runtime": 62.1358,
+      "train_samples_per_second": 12.875,
+      "train_steps_per_second": 0.805,
+      "total_flos": 4561008769253376.0,
+      "train_loss": 0.5999315166473389,
+      "epoch": 1.0,
+      "step": 50
+    }
+  ]
+}

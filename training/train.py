@@ -15,7 +15,9 @@ then produced by scripts/pairs.py apply_map, so consistency and the untouched re
 hold by construction and the model's job shrinks to detection + choosing substitutes. This is
 the shape eternisai/Anonymizer uses (a replace_entities tool call). Map predictions are written
 as rewritten text (plus the raw reply) so scripts/evaluate.py scores both modes the same way.
-Env: BASE, EPOCHS, LR, BATCH (per device, default 4; grad accumulation keeps 16), TARGET, MAX_TRAIN (cap rows, for smoke runs), SKIP_BASE=1 (reuse an earlier run's
+Env: BASE, EPOCHS, LR, BATCH (per device, default 4; grad accumulation keeps 16), TARGET, MAX_TRAIN, TEST_N (score on the
+first N test rows only; probe runs use MAX_TRAIN=800 EPOCHS=1 TEST_N=100, see docs/spec.md), TEST_N (score
+on the first N test rows only; with MAX_TRAIN this gives a ~5-minute preliminary run) (cap rows, for smoke runs), SKIP_BASE=1 (reuse an earlier run's
 pred_base.jsonl; the base eval is ~12 min of L4 time and does not change between runs).
 """
 import json
@@ -40,6 +42,8 @@ DATA = Path(__file__).resolve().parent.parent / "data"
 EPOCHS = float(os.environ.get("EPOCHS", "2"))
 LR = float(os.environ.get("LR", "2e-5"))
 MAX_TRAIN = int(os.environ.get("MAX_TRAIN", "0"))
+TEST_N = int(os.environ.get("TEST_N", "0"))
+TEST_N = int(os.environ.get("TEST_N", "0"))
 SKIP_BASE = os.environ.get("SKIP_BASE") == "1"
 TARGET = os.environ.get("TARGET", "text")
 BATCH = int(os.environ.get("BATCH", "4"))
@@ -119,7 +123,9 @@ def main():
     print(f"transformers {transformers.__version__}, trl {trl.__version__}", file=sys.stderr)
     train, test = load("train.jsonl"), load("test.jsonl")
     if MAX_TRAIN:
-        train, test = train[:MAX_TRAIN], test[:16]
+        train, test = train[:MAX_TRAIN], test[:TEST_N or 16]
+    elif TEST_N:
+        test = test[:TEST_N]
     tok = AutoTokenizer.from_pretrained(BASE)
     t0 = time.time()
 
