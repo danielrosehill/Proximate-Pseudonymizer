@@ -21,6 +21,9 @@ tags:
 > It still leaves about **9% of identifying details unchanged**, so **do not run it
 > unsupervised**. Check every output before sharing it.
 
+**Try it:** [public demo Space](https://huggingface.co/spaces/danielrosehill/Proximate-Pseudonymizer-Demo)
+(runs on CPU and shows a word-level diff of every swap, so you can spot what it missed).
+
 A small **text in → text out** model. It rewrites a text with its identifying details
 swapped for **close, plausible substitutes**, and uses the same substitute every time a
 detail recurs.

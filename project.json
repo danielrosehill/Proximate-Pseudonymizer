@@ -209,8 +209,10 @@
     ],
     "public_repo": null,
     "hf_spaces": [
-      "danielrosehill/Proximate-Pseudonymizer-Review (private review Space)"
-    ]
+      "danielrosehill/Proximate-Pseudonymizer-Review (private review Space)",
+      "danielrosehill/Proximate-Pseudonymizer-Demo (public demo Space, source demo/)"
+    ],
+    "demo": "https://huggingface.co/spaces/danielrosehill/Proximate-Pseudonymizer-Demo"
   },
   "release": {
     "intent": "public",

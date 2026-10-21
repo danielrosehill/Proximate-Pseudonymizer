@@ -12,7 +12,9 @@ real people and places.
 
 **Status: proof of concept, 2026-10-21. Training paused after the first useful checkpoint.**
 Model: [`danielrosehill/Proximate-Pseudonymizer-0.6B`](https://huggingface.co/danielrosehill/Proximate-Pseudonymizer-0.6B)
-(Qwen3-0.6B full fine-tune, Apache-2.0). On 295 held-out texts it leaves **9.3% of identifying
+(Qwen3-0.6B full fine-tune, Apache-2.0). Try it in the public demo Space
+[`Proximate-Pseudonymizer-Demo`](https://huggingface.co/spaces/danielrosehill/Proximate-Pseudonymizer-Demo)
+(CPU, word-level diff of every swap; source in `demo/`). On 295 held-out texts it leaves **9.3% of identifying
 details unchanged**; consistency is 0.99 and the rest of the text is 0.998 preserved. **It is
 not safe to run unsupervised.** Suggested targets: ≤ 1% leak with a human reviewing every
 output, ~0.1% or less without. The model card
@@ -32,6 +34,7 @@ training, a larger base, and the swap-list output mode with copy-back repair
 | 3. Human review (gold test set first) | private Space [`Proximate-Pseudonymizer-Review`](https://huggingface.co/spaces/danielrosehill/Proximate-Pseudonymizer-Review) (`space/`), then `scripts/pull_reviews.py`; or locally `scripts/review.py` → http://localhost:8767 | HF / laptop |
 | 4. Train + predict | `training/train.py` (`TARGET=text` or `map`; `MAX_TRAIN`/`TEST_N` for probes) | Modal `ai-training` |
 | 4b. Map-mode inference with copy-back repair | `training/infer.py` | Modal `ai-training` |
+| 4c. Public demo | `demo/` (Gradio 5.49.1, CPU basic, uploaded with `huggingface_hub`) | Space [`Proximate-Pseudonymizer-Demo`](https://huggingface.co/spaces/danielrosehill/Proximate-Pseudonymizer-Demo) |
 | 5. Score | `scripts/evaluate.py runs/<run>/pred_*.jsonl` | laptop |
 | — Review learnings | `scripts/learnings.py` (corrections grouped by reason, with example edits) | laptop |
 
