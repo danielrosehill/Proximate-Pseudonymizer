@@ -4,8 +4,8 @@
   "title": "Text-in/text-out pseudonymizer that swaps identifying details for proximate, consistent substitutes",
   "created": "2026-10-21",
   "updated": "2026-10-21",
-  "status": "training",
-  "stage": "training",
+  "status": "proof-of-concept",
+  "stage": "proof-of-concept",
   "verdict": "build",
   "task": {
     "pipeline_tag": "text-generation",
@@ -38,12 +38,14 @@
       "note": "manual review replaced by scripts/similarity.py too-close checks + repair.py"
     },
     "training": {
-      "status": "in_progress",
-      "date": "2026-10-21"
+      "status": "paused",
+      "date": "2026-10-21",
+      "note": "stopped at pp-r2 (leak 0.093); next steps in docs/model-card.md 'Getting there'"
     },
     "publish": {
-      "status": "todo",
-      "date": null
+      "status": "done",
+      "date": "2026-10-21",
+      "note": "model only, as proof of concept; dataset stays private"
     }
   },
   "data_runs": [
@@ -199,7 +201,9 @@
   "links": {
     "github": "https://github.com/danielrosehill/Proximate-Pseudonymizer",
     "hub_entry": "ai-models/AI-Model-Development-Workspace/projects.json",
-    "hf_models": [],
+    "hf_models": [
+      "danielrosehill/Proximate-Pseudonymizer-0.6B (public, PoC checkpoint pp-r2)"
+    ],
     "hf_datasets": [
       "danielrosehill/Proximate-Pseudonymizer-Pairs (private working copy + reviews/)"
     ],
@@ -210,6 +214,17 @@
   },
   "release": {
     "intent": "public",
-    "shape": "single public repo; HF dataset + model public"
+    "shape": "single public repo; HF dataset + model public",
+    "published": {
+      "model": "danielrosehill/Proximate-Pseudonymizer-0.6B",
+      "run": "pp-r2",
+      "date": "2026-10-21",
+      "dataset": "not published"
+    }
+  },
+  "targets": {
+    "leak_human_in_loop": 0.01,
+    "leak_unsupervised": 0.001,
+    "note": "Daniel 2026-10-21: ~1% reasonable risk tolerance with a human in the loop, smaller without"
   }
 }
