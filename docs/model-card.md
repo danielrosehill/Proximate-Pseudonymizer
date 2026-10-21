@@ -17,7 +17,7 @@ tags:
 
 # Proximate-Pseudonymizer 0.6B (proof of concept)
 
-> **Status: proof of concept, first checkpoint (2026-10-21). Training is still in progress.**
+> **Status: proof of concept, first checkpoint (2026-10-21). Training is paused after this checkpoint; next steps are under "Getting there".**
 > It still leaves about **9% of identifying details unchanged**, so **do not run it
 > unsupervised**. Check every output before sharing it.
 
